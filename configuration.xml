@@ -1,0 +1,64 @@
+<?xml version="1.0"?>
+<configuration>
+
+	<property>
+		<name>job.reducer.number</name>
+		<value>1</value>
+		<description>the number of reducer in a task</description>
+	</property>
+	
+	<property>
+		<name>netflow.analyzer.interval</name>
+		<value>300</value>
+		<description>interval for periodic jobs</description>
+	</property>
+
+	<property>
+		<name>netflow.analyzer.compression</name>
+		<value>false</value>
+		<description>the compression flag in block header is not accurate, you need the set the value by yourself</description>
+	</property>
+
+	<property>
+		<name>fs.defaultFS</name>
+		<value>hdfs://127.0.0.1:9000</value>
+		<description>default File System</description>
+	</property>
+	
+	<property>
+		<name>job.input.srcDir</name>
+		<value>hdfs://127.0.0.1:9000/apps/netflow/input/nfcapd</value>
+		<description>input dir</description>
+	</property>
+	
+	<property>
+		<name>job.output.dstDir</name>
+		<value>hdfs://127.0.0.1:9000/results/netflow/input/ddos</value>
+		<description>output dir</description>
+	</property>
+
+	<property>
+		<name>job.database.dbDir</name>
+		<value>/home/seasun/GeoLite2-Country.mmdb</value>
+		<description>database dir </description>
+	</property>
+	
+	<property>
+		<name>job.mysql.database</name>
+		<value>jdbc:mysql://localhost:3306/netflow</value>
+		<description>the database you connect to </description>
+	</property>
+	
+	<property>
+		<name>job.mysql.username</name>
+		<value>root</value>
+		<description>username of mysql</description>
+	</property>
+	
+	<property>
+		<name>job.mysql.password</name>
+		<value></value>
+		<description>password of mysql</description>
+	</property>
+	
+</configuration> 
