@@ -1,6 +1,5 @@
 package com.pangu.Netflow.Analyzer;
 
-
 import java.io.IOException;
 
 import org.apache.hadoop.fs.FileSystem;
@@ -12,6 +11,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
+import org.apache.hadoop.mapreduce.Mapper.Context;
+import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
+import org.apache.hadoop.mapreduce.lib.db.DBOutputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
@@ -20,83 +22,98 @@ import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
 import com.pangu.Netflow.Netflow_IO.*;
 
-public class Netflow_Stat {
-	
+public class Transport_Analyzer {
+
 	private static Configuration conf;
 	private static String srcFileName;
-	private static String dstFileName;
 	private static int reducer_num;
-	private static Path outputDir;
 	private static Path inputDir;
 	
-	public Netflow_Stat() throws IOException{
+	private static String database;
+	private static String username;
+	private static String password;
+	
+	public Transport_Analyzer() throws IOException{
 		conf = new Configuration();
 	}
 	
-	public Netflow_Stat(Configuration Conf) throws IOException{
+	public Transport_Analyzer(Configuration Conf) throws IOException{
 		conf = Conf;
 		srcFileName = conf.getStrings("job.input.srcDir")[0];
-		dstFileName = conf.getStrings("job.output.dstDir")[0]+"/Netflow_Stat";
 		reducer_num = conf.getInt("job.reducer.number", 1);
+		
+		database = conf.get("job.mysql.database");
+		username = conf.get("job.mysql.username");
+		password = conf.get("job.mysql.password", "");
+		//interval = conf.getInt("netflow.analyzer.interval", 60); 
 	}
 	
 	public void start() throws ClassNotFoundException, InterruptedException{
-        
+	        
     	try{
-
-    	   outputDir = new Path(dstFileName + "/state1/");
     	   inputDir = new Path(srcFileName);
     		FileSystem fs = FileSystem.get(conf);
-			Job job_state1 = get_state1_JobConf("Netflow_Stat state1", inputDir, outputDir);  
-			
-			// delete any output that might exist from a previous run of this job
-			if (fs.exists(FileOutputFormat.getOutputPath(job_state1))) {
-				fs.delete(FileOutputFormat.getOutputPath(job_state1), true);
-	        }
+			Job job_state1 = get_JobConf("Netflow_Stat state1", inputDir);
 
 			job_state1.waitForCompletion(true);
-
-        }catch (IOException e) {
+    	}catch (IOException e) {
     		// TODO Auto-generated catch block
     		e.printStackTrace();
     	}
-    }
+	}
 	
-	private Job get_state1_JobConf(String jobName, Path inFilePath, Path outFilePath) throws IOException{//获取第一阶段工作配置
+	private Job get_JobConf(String jobName, Path inFilePath) throws IOException{//获取第一阶段工作配置
 		  
+		DBConfiguration.configureDB(conf, "com.mysql.jdbc.Driver", database, username, password);
+		
 		Job job = Job.getInstance(conf);
+		
 		job.setJarByClass(Netflow_Stat.class);
+		
 		job.setJobName(jobName);     
-		job.setNumReduceTasks(reducer_num);       
+		job.setNumReduceTasks(reducer_num);  
+		
 		job.setOutputKeyClass(Text.class);
-		job.setOutputValueClass(Text.class);	       
+		job.setOutputValueClass(Text.class);	      
+		
+		job.setInputFormatClass(NetflowInputFormat.class);            
+		//job.setOutputFormatClass(TextOutputFormat.class);  
 		job.setInputFormatClass(NetflowInputFormat.class);          
-		job.setOutputFormatClass(TextOutputFormat.class);     
+		job.setOutputFormatClass(DBOutputFormat.class); 
+		DBOutputFormat.setOutput(job, "Netflow_Transport", "router", "timestamp", "protocol", "flows", "packets", "bytes");
+		
 		job.setMapperClass(Map_Stats1.class);
 		job.setCombinerClass(Combine_Stats1.class);          
 		job.setReducerClass(Reduce_Stats1.class);    
 		
 		FileInputFormat.setInputPaths(job, inFilePath);
-		FileOutputFormat.setOutputPath(job, outFilePath);
         
       return job;
 	}
-
+	
 	public static class Map_Stats1 extends Mapper<LongWritable, BytesWritable, Text, Text>{
-		
+		private int interval = 60;
 		private byte[] value_bytes;
 		
 		private int src_port;
 		private int dst_port;
-		private long timestamp;
+		private int duration;
+		private int protocol;
+		private long flow_size;
 		private long packets;
 		private long bytes;
+		private long timestamp;
+		private long PacketsSize;
 		
 		private Netflow_record record = new Netflow_record();
+	   private Text text = new Text();
+		private LongWritable longwrite = new LongWritable();
 		
 		@Override
 		public void setup(Context context)throws IOException,InterruptedException{
-
+			interval = context.getConfiguration().getInt("netflow.analyzer.interval", 60); 
+			flow_size = 0;
+			timestamp = 0;
 		}
 		
 		@Override
@@ -109,72 +126,13 @@ public class Netflow_Stat {
 			timestamp = record.getStime();
 			timestamp = timestamp - timestamp%300;
 			
-			src_port = record.getSrcPort();
+			protocol = get_protocol(record.getProto());
 			
-			dst_port = record.getDstPort();
-
 			packets = record.getPKT();
 			bytes = record.getBytes();
 			
-		   context.write(new Text(timestamp + "\t"+get_protocol_type(src_port, dst_port)), new Text(packets+"\t"+bytes));
-			/*	
-			src_port = record.getSrcPort();
-			//text.clear();Finished spill 15
-			//text.set("sp" + "\t"+src_port);
-			context.write(new Text("sp" + "\t"+src_port), new LongWritable(1));
-			
-			dst_port = record.getDstPort();
-			//text.clear();
-			//text.set("dp" + "\t"+dst_port);
-		   context.write(new Text("dp" + "\t"+dst_port), new LongWritable(1));
-		
-			duration = record.getEtime()-record.getStime();
-			if(0 < duration && duration < 100)
-				duration = 0;
-			else if(100 <= duration && duration < 500)
-				duration = 1;
-			else if(500 <= duration && duration < 1000)
-				duration = 2;
-			else if(1000 <= duration && duration < 5000)
-				duration = 3;
-			else if(5000 <= duration && duration < 10000)
-				duration = 4;
-			else if(10000 <= duration && duration < 20000)
-				duration = 5;
-			else if(20000 <= duration && duration < 50000)
-				duration = 6;
-			else
-				duration = 7;
-			//text.clear();
-			//text.set("du" + "\t"+duration);
-		   context.write(new Text("du" + "\t"+duration), new LongWritable(1));
-		   
-			protocol = record.getProto();
-			//text.clear();
-			//text.set("pr" + "\t"+protocol);
-		   context.write(new Text("pr" + "\t"+protocol), new LongWritable(1));
-		
-			flow_size = record.getBytes();
-			if(0 < flow_size && flow_size < 100)
-				flow_size = 0;
-			else if(0 <= flow_size && flow_size < 200)
-				flow_size = 1;
-			else if(200 <= flow_size && flow_size < 300)
-				flow_size = 2;
-			else if(300 <= flow_size && flow_size < 500)
-				flow_size = 3;
-			else if(500 <= flow_size && flow_size < 1000)
-				flow_size = 5;
-			else if(1000 < flow_size && flow_size < 2000)
-				flow_size = 10;
-			else if(2000 <= flow_size && flow_size < 5000)
-				flow_size = 20;
-			else
-				flow_size = 50;
-			text.clear();
-			text.set("si" + "\t"+flow_size);
-		   context.write(text, longwrite);
-			*/
+		   context.write(new Text(timestamp + "\t"+protocol), new Text(packets+"\t"+bytes));
+
 	    }//map`
 	}//Map_States1
 	
@@ -192,7 +150,6 @@ public class Netflow_Stat {
 		
 		@Override
 		public void reduce(Text key, Iterable<Text> value, Context context) throws IOException, InterruptedException {
-
 			flows = 0;
 			packets = 0;
 			bytes = 0;
@@ -204,13 +161,13 @@ public class Netflow_Stat {
 				bytes += Integer.parseInt(temp[1].trim());
 			}
 			context.write(key, new Text(flows+"\t"+packets+"\t"+bytes));
-			  
+			
 		}
 	    
 	}
 	
-	public static class Reduce_Stats1 extends Reducer<Text, Text, Text, Text> {	
-
+	public static class Reduce_Stats1 extends Reducer<Text, Text, NetflowDBWritable2, NetflowDBWritable2> {	
+	
 		private long flows;
 		private long packets;
 		private long bytes;
@@ -220,11 +177,11 @@ public class Netflow_Stat {
 		
 		@Override
 		public void setup(Context context){
-			
+
 		}
+		
 		@Override
 		public void reduce(Text key, Iterable<Text> value, Context context) throws IOException, InterruptedException {
-			
 			packets = 0;
 			bytes = 0;
 			flows = 0;
@@ -239,66 +196,24 @@ public class Netflow_Stat {
 			timestamp = Integer.parseInt(temp[0].trim());
 			protocol = Integer.parseInt(temp[1].trim());
 			
-			context.write(key, new Text(flows+"\t"+packets+"\t"+bytes));
+			context.write(new NetflowDBWritable2(1, (int)timestamp, (int)protocol, (int)flows, (int)packets, (int)bytes), null);
 			  
 		}
 	    
 	}
 
 
-    public static int get_protocol_type(int port1, int port2){
-		switch(port1){
-		case 53:
-			return 2;
-		case 25:
-			return 7;
-		case 110:
-			return 4;
-		case 80:
+	public static int get_protocol(int protocol){
+		switch(protocol){
+		case 1:
 			return 1;
-		case 23:
-			return 5;
-		case 443:
-			return 6;
-		case 69:
-			return 9;
-		case 161:
-			return 3;
-		case 162:
-			return 3;
-		case 20:
-			return 8;
-		case 21:
-			return 8;
-		default:
-			;
-		}
-		switch(port2){
-		case 53:
+		case 6:
 			return 2;
-		case 25:
-			return 7;
-		case 110:
-			return 4;
-		case 80:
-			return 1;
-		case 23:
-			return 5;
-		case 443:
-			return 6;
-		case 69:
-			return 9;
-		case 161:
+		case 17:
 			return 3;
-		case 162:
-			return 3;
-		case 20:
-			return 8;
-		case 21:
-			return 8;
 		default:
-			;
+			return 4;
 		}
-		return 10;
 	}
+	
 }

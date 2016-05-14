@@ -16,7 +16,7 @@ import org.anarres.lzo.LzoAlgorithm;
 public class NetflowLineReader {
 
     private InputStream in;
-    
+    private boolean compressed;
     private int record_num = 0;
     private int block_size = 0;
     private int record_read = 0;
@@ -32,8 +32,8 @@ public class NetflowLineReader {
     }
 
     public NetflowLineReader(InputStream in, Configuration conf) throws IOException {
-        //this(in, conf.getLong("pcap.file.captime.min", 1000000000), conf.getLong("pcap.file.captime.max", 2000000000));
     	this.in = in;
+    	this.compressed = conf.getBoolean("netflow.analyzer.compression", true);
     }
 
     public void close() throws IOException {
@@ -42,9 +42,12 @@ public class NetflowLineReader {
 
     int locateBlockHeader() throws IOException{
     	int bytes_read = 0;
-    	int buffer_len = 1000000;
+    	int buffer_len = 10000000;
     	int size = 0;
     	int pos = 0;
+    	
+    	long temp = 0;
+    	byte[] tempb = new byte[4];
     	
     	byte[] captured = new byte[buffer_len];
     	byte[] tmp = new byte[10000];
@@ -68,16 +71,23 @@ public class NetflowLineReader {
     	while(pos < buffer_len){
     		
     		System.arraycopy(captured, pos, block_header, 0, 12);
-    		
+    		if(pos == 1048536+276+12){
+    			System.arraycopy(block_header, 4, tempb, 0, 4);
+    			temp = Bytes.toLong(BinaryUtils.flipBO(tempb, 4));
+    			System.out.println("@@@@@@size:"+temp);
+    			System.arraycopy(block_header, 0, tempb, 0, 4);
+    			temp = Bytes.toLong(BinaryUtils.flipBO(tempb, 4));
+    			System.out.println("@@@@@@num:"+temp);
+    		}
     		if(checkBlockHeader(block_header)){
     			
     			long block_size = 0;
     			byte[] block_size_b = new byte[4];
     			System.arraycopy(block_header, 4, block_size_b, 0, 4);
     			block_size = Bytes.toLong(BinaryUtils.flipBO(block_size_b, 4));
-    			
+    			System.out.println("!!!!!!!!!!!"+block_size+"pos:"+pos);
     			if(pos+block_size < buffer_len){
-    				
+    				System.out.println("#####pos+block_size"+(pos+block_size));
         			byte[] block_body = new byte[(int) block_size];
         			System.arraycopy(captured, pos+12, block_body, 0, (int) block_size);
         			if(checkBlockBody(block_body))
@@ -112,14 +122,17 @@ public class NetflowLineReader {
 		id = Bytes.toInt(BinaryUtils.flipBO(id_b, 2));
 		flag = Bytes.toInt(BinaryUtils.flipBO(flag_b, 2));
 		//if(id == 2 && flag == 0)
-			//System.out.println("record_num:"+record_num+"\tblock_size:"+block_size+"\tid:"+id+"\tflag:"+flag);
-		if(id == 2 && flag == 0 && 0 < record_num && record_num < 100000 && 0 < block_size && block_size < 1000000)
-			return true;
+		//	System.out.println("record_num:"+record_num+"\tblock_size:"+block_size+"\tid:"+id+"\tflag:"+flag);
+		if(id == 2 && flag == 0 && 0 < record_num && record_num < 1000000 && 20 < block_size && block_size < 100000000)
+			return true;														 												  
     	
     	return false;
     }
     
     boolean checkBlockBody(byte[] BlockBody){
+    	if(BlockBody.length < 20)
+    		return false;
+    	
     	int type = 0;
     	int size = 0;
     	int flag = 0;
@@ -132,26 +145,35 @@ public class NetflowLineReader {
     	byte[] stime_b = new byte[4];
     	byte[] etime_b = new byte[4];
     	
-		byte[] dBlockBody = new byte[4*BlockBody.length];
-		LzoAlgorithm algorithm = LzoAlgorithm.LZO1X;  
-		LzoDecompressor decompressor = LzoLibrary.getInstance().newDecompressor(algorithm, null);  
-		lzo_uintp len = new lzo_uintp();
-		len.value = dBlockBody.length;
-		decompressor.decompress(BlockBody, 0, BlockBody.length, dBlockBody, 0, len);
+    	if(compressed == true){
+    		byte[] dBlockBody = new byte[4*BlockBody.length];
+    		LzoAlgorithm algorithm = LzoAlgorithm.LZO1X;  
+    		LzoDecompressor decompressor = LzoLibrary.getInstance().newDecompressor(algorithm, null);  
+    		lzo_uintp len = new lzo_uintp();
+    		len.value = dBlockBody.length;
+    		decompressor.decompress(BlockBody, 0, BlockBody.length, dBlockBody, 0, len);
+    		
+    		System.arraycopy(dBlockBody, 0, type_b, 0, 2);
+        	System.arraycopy(dBlockBody, 2, size_b, 0, 2);
+        	System.arraycopy(dBlockBody, 4, flag_b, 0, 1);
+        	System.arraycopy(dBlockBody, 12, stime_b, 0, 4);
+        	System.arraycopy(dBlockBody, 16, etime_b, 0, 4);
+    	}else{
+    		System.arraycopy(BlockBody, 0, type_b, 0, 2);
+        	System.arraycopy(BlockBody, 2, size_b, 0, 2);
+        	System.arraycopy(BlockBody, 4, flag_b, 0, 1);
+        	System.arraycopy(BlockBody, 12, stime_b, 0, 4);
+        	System.arraycopy(BlockBody, 16, etime_b, 0, 4);
+    	}
 		
-		System.arraycopy(dBlockBody, 0, type_b, 0, 2);
-    	System.arraycopy(dBlockBody, 2, size_b, 0, 2);
-    	System.arraycopy(dBlockBody, 4, flag_b, 0, 1);
-    	System.arraycopy(dBlockBody, 12, stime_b, 0, 4);
-    	System.arraycopy(dBlockBody, 16, etime_b, 0, 4);
 
     	type = Bytes.toInt(BinaryUtils.flipBO(type_b, 2));
     	size = Bytes.toInt(BinaryUtils.flipBO(size_b, 2));
     	flag = Bytes.toInt(flag_b);
     	stime = Bytes.toInt(BinaryUtils.flipBO(stime_b, 4));
     	etime = Bytes.toInt(BinaryUtils.flipBO(etime_b, 4));
-		
-    	if(type == 1 && flag == 6 && 0 < size && size < 1000 && stime <= etime && 1000000000 < stime && stime < 2000000000 && 1000000000 < etime && etime < 2000000000)
+		System.out.println("t:"+type+"s:"+size+"f:"+flag+"s:"+stime+"e:"+etime);
+    	if(type == 1/* && flag == 6*/ && 0 < size && size < 100000 && stime <= etime && 1000000000 < stime && stime < 2000000000 && 1000000000 < etime && etime < 2000000000)
     		return true;
     	
     	return false;
@@ -194,13 +216,17 @@ public class NetflowLineReader {
     		bytes_read+=size;
 
     	}
+    	if(compressed == true){
+    		//decompress block_body
+    		LzoAlgorithm algorithm = LzoAlgorithm.LZO1X;  
+    		LzoDecompressor decompressor = LzoLibrary.getInstance().newDecompressor(algorithm, null);  
+    		lzo_uintp len = new lzo_uintp();
+    		len.value = 4*block_size;
+    		decompressor.decompress(block_body_compressed, 0, block_size, block_body, 0, len);
+    	}else{
+    		System.arraycopy(block_body_compressed, 0, block_body, 0, block_body_compressed.length);
+    	}
     	
-    	//decompress block_body
-		LzoAlgorithm algorithm = LzoAlgorithm.LZO1X;  
-		LzoDecompressor decompressor = LzoLibrary.getInstance().newDecompressor(algorithm, null);  
-		lzo_uintp len = new lzo_uintp();
-		len.value = 4*block_size;
-		decompressor.decompress(block_body_compressed, 0, block_size, block_body, 0, len);
     	
 		return 0;
     }

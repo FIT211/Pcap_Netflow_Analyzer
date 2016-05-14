@@ -88,7 +88,6 @@ public class NetflowRecordReader extends RecordReader<LongWritable, BytesWritabl
 		skip = in.locateBlockHeader();
 
 		while(skip == -2 || skip == -1){
-			System.out.println("fock!!!");
 			if(skip == -1){
 				this.pos = this.end;
 				break;

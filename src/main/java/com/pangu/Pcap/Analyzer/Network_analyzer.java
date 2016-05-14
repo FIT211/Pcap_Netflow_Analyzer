@@ -188,7 +188,7 @@ public class Network_analyzer{
 				}
 				if(exist == true){
         			country = response.getCountry();
-            	country_name = country.getName();
+            	country_name = get_country(country.getName());
             	text.clear();
             	text.set("src\t" + Long.toString(Timestamp) + "\t" + country_name);
 					longwrite.set(Caplen);
@@ -209,7 +209,7 @@ public class Network_analyzer{
 				}
 				if(exist == true){
         			country = response.getCountry();
-            	country_name = country.getName();
+        			country_name = get_country(country.getName());
             	text.clear();
             	text.set("dst\t" + Long.toString(Timestamp) + "\t" + country_name);
 					longwrite.set(Caplen);
@@ -279,6 +279,38 @@ public class Network_analyzer{
 
     	}
 	
+    }
+    
+    public static String get_country(String s){
+
+    	if(s != null)
+    		switch(s){
+    		case "China":
+    			return "CHINA";
+    		case "Russia":
+    			return "RUSSIA";
+    		case "Canada":
+    			return "CANADA";
+    		case "India":
+    			return "INDIA";
+    		case "Germany":
+    			return "GERMANY";
+    		case "Japan":
+    			return "JAPAN";
+    		case "United States":
+    			return "US";
+    		case "United Kingdom":
+    			return "UK";
+    		case "France":
+    			return "FRANCE";
+    		case "Hong Kong":
+    			return "HK";
+    		default:
+    			return "OTHERS";
+    		}
+    	else
+    		return "OTHERS";
+    	
     }
 
 }

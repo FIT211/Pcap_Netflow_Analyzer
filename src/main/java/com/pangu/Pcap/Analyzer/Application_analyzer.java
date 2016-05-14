@@ -243,52 +243,61 @@ public class Application_analyzer {
 	　　imap 143/tcp
 	　　snmp 161/udp
 	　　snmptrap 162/udp:*/
+    
+    /*DNS
+     *SMTP
+     *POP3
+     *HTTP
+     *HTTPS
+     *TELNET
+     *FTP
+     *TFTP
+     *IMAP
+     *SNMP
+     **/
+    
 	public static String get_protocol_type_TCP(int port1, int port2){
 		switch(port1){
 		case 53:
 			return "DNS";
-		/*case 25:
+		case 25:
 			return "SMTP";
 		case 110:
-			return "POP3";*/
+			return "POP3";
 		case 80:
 			return "HTTP";
 		case 23:
-			return "TELNET";/*
+			return "TELNET";
 		case 20:
 			return "FTP";
 		case 21:
 			return "FTP";
 		case 143:
 			return "IMAP";
-		case 67:
-			return "DHCP";*/
+		/*case 67:
+			return "DHCP";
 		case 135:
-			return "RPC";
+			return "RPC";*/
 		default:
 			;
 		}
 		switch(port2){
 		case 53:
 			return "DNS";
-		/*case 25:
+		case 25:
 			return "SMTP";
 		case 110:
-			return "POP3";*/
+			return "POP3";
 		case 80:
 			return "HTTP";
 		case 23:
-			return "TELNET";/*
+			return "TELNET";
 		case 20:
 			return "FTP";
 		case 21:
 			return "FTP";
 		case 143:
 			return "IMAP";
-		case 67:
-			return "DHCP";*/
-		case 135:
-			return "RPC";
 		default:
 			;
 		}
@@ -299,40 +308,36 @@ public class Application_analyzer {
 		switch(port1){
 		case 53:
 			return "DNS";
-		/*case 443:
+		case 443:
 			return "HTTPS";
 		case 69:
-			return "TFTP";*/
+			return "TFTP";
 		case 161:
 			return "SNMP";
-		/*case 162:
-			return "SNMPTRAP";*/
-		case 1900:
-			return "SSDP";
-		case 137:
+		case 162:
+			return "SNMP";
+		/*case 137:
 			return "NBNS";
-		//case 5355:
-		//	return "LLMNR";
+		case 5355:
+			return "LLMNR";*/
 		default:
 			;
 		}
 		switch(port2){
 		case 53:
 			return "DNS";
-		/*case 443:
+		case 443:
 			return "HTTPS";
 		case 69:
-			return "TFTP";*/
+			return "TFTP";
 		case 161:
 			return "SNMP";
-		/*case 162:
-			return "SNMPTRAP";*/
-		case 1900:
-			return "SSDP";
-		case 137:
+		case 162:
+			return "SNMP";
+		/*case 137:
 			return "NBNS";
-		//case 5355:
-		//	return "LLMNR";
+		case 5355:
+			return "LLMNR";*/
 		default:
 			;
 		}
