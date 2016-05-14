@@ -11,18 +11,11 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.apache.hadoop.mapreduce.lib.db.DBOutputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
-import com.pangu.Netflow.Analyzer.Netflow_Stat.Combine_Stats1;
-import com.pangu.Netflow.Analyzer.Netflow_Stat.Map_Stats1;
-import com.pangu.Netflow.Analyzer.Netflow_Stat.Reduce_Stats1;
 import com.pangu.Netflow.Netflow_IO.*;
 
 public class Netflow_Analyzer_DB {
@@ -103,23 +96,15 @@ public class Netflow_Analyzer_DB {
 		
 		private int src_port;
 		private int dst_port;
-		private int duration;
-		private int protocol;
-		private long flow_size;
 		private long packets;
 		private long bytes;
 		private long timestamp;
-		private long PacketsSize;
 		
 		private Netflow_record record = new Netflow_record();
-	   private Text text = new Text();
-		private LongWritable longwrite = new LongWritable();
 		
 		@Override
 		public void setup(Context context)throws IOException,InterruptedException{
 			interval = context.getConfiguration().getInt("netflow.analyzer.interval", 60); 
-			flow_size = 0;
-			timestamp = 0;
 		}
 		
 		@Override
@@ -130,7 +115,7 @@ public class Netflow_Analyzer_DB {
 			record.setNeflowRecord(value_bytes);
 			
 			timestamp = record.getStime();
-			timestamp = timestamp - timestamp%300;
+			timestamp = timestamp - timestamp%interval;
 			
 			src_port = record.getSrcPort();
 			

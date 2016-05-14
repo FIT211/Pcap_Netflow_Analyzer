@@ -1,7 +1,6 @@
 package com.pangu.Netflow.Netflow_IO;
 
 import com.pangu.Common.*;
-import com.pangu.Common.*;
 
 public class Netflow_record {
 	private int type = 0;
@@ -14,17 +13,15 @@ public class Netflow_record {
 	private int tos = 0;
 	private int src_port = 0;
 	private int dst_port = 0;
-	private int[] src_ip = new int[4];
-	private int[] dst_ip = new int[4];
+	//private int[] src_ip = new int[4];
+	//private int[] dst_ip = new int[4];
 	private String str_src_ip;
 	private String str_dst_ip;
 	private long pkt = 0;
 	private long bytes = 0;
 	
-	private int extend = 0;
 	private int flag_ipv6 = 0;
 	private int flag_pkt64 = 0;
-	private int flag_bytes64 = 0;
 	
 	private byte[] type_b = new byte[2];
 	private byte[] size_b = new byte[2];
@@ -60,6 +57,7 @@ public class Netflow_record {
 		System.arraycopy(record, 26, dst_port_b, 0, 2);
 		//System.out.println(type_b[0]+"\t"+type_b[1]);
 		//System.out.println(flag[0]+"\t"+flag[1]);
+		
 		if((flag[0]&0x01) == 0x01){
 			flag_ipv6 = 1;
 			System.arraycopy(record, 28, src_ip_v6, 0, 16);

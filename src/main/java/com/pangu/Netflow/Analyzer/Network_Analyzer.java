@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -13,14 +12,9 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.Mapper;
 import org.apache.hadoop.mapreduce.Reducer;
-import org.apache.hadoop.mapreduce.Mapper.Context;
 import org.apache.hadoop.mapreduce.lib.db.DBConfiguration;
 import org.apache.hadoop.mapreduce.lib.db.DBOutputFormat;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
-import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
 import com.maxmind.geoip2.DatabaseReader;
 import com.maxmind.geoip2.exception.GeoIp2Exception;
@@ -57,7 +51,7 @@ public class Network_Analyzer {
 	        
     	try{
     	   inputDir = new Path(srcFileName);
-    		FileSystem fs = FileSystem.get(conf);
+    	   
 			Job job_state1 = get_JobConf("Netflow_Stat state1", inputDir);  
 			
 			job_state1.waitForCompletion(true);
@@ -117,8 +111,6 @@ public class Network_Analyzer {
 		private boolean exist;
 		
 		private Netflow_record record = new Netflow_record();
-	   private Text text = new Text();
-		private LongWritable longwrite = new LongWritable();
 		
 		@Override
 		public void setup(Context context)throws IOException,InterruptedException{
@@ -145,7 +137,7 @@ public class Network_Analyzer {
 			record.setNeflowRecord(value_bytes);
 			
 			timestamp = record.getStime();
-			timestamp = timestamp - timestamp%300;
+			timestamp = timestamp - timestamp%interval;
 
 			packets = record.getPKT();
 			bytes = record.getBytes();
@@ -194,11 +186,9 @@ public class Network_Analyzer {
 		private long flows = 0;
 		private long packets = 0;
 		private long bytes = 0;
-		private long count = 0;
 		@Override
 		public void setup(Context context){
 			System.out.println("Combine setup");
-			count = 0;
 		}
 		
 		@Override

@@ -4,7 +4,6 @@ package com.pangu.Netflow.Runner;
 import java.io.File;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
 
 import com.pangu.Netflow.Analyzer.*;
 
@@ -27,6 +26,7 @@ public class Netflow_analysis_runner {
 	private static int topN = 1;
 	private static int interval = 60;
 	
+	@SuppressWarnings("deprecation")
 	public static void main(String[] args) throws Exception{
 
 		char argtype = 0;

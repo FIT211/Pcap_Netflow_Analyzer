@@ -15,8 +15,6 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.mapreduce.lib.output.TextOutputFormat;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
-import org.apache.hadoop.mapreduce.lib.output.MultipleOutputs;
 
 import com.pangu.Netflow.Netflow_IO.*;
 
@@ -96,7 +94,6 @@ public class Netflow_Stat {
 		
 		@Override
 		public void setup(Context context)throws IOException,InterruptedException{
-
 		}
 		
 		@Override
@@ -215,8 +212,6 @@ public class Netflow_Stat {
 		private long packets;
 		private long bytes;
 		private String temp[];
-		private long timestamp;
-		private int protocol;
 		
 		@Override
 		public void setup(Context context){
@@ -234,10 +229,6 @@ public class Netflow_Stat {
 				packets += Integer.parseInt(temp[1].trim());
 				bytes += Integer.parseInt(temp[2].trim());
 			}
-			
-			temp = key.toString().split("\t");
-			timestamp = Integer.parseInt(temp[0].trim());
-			protocol = Integer.parseInt(temp[1].trim());
 			
 			context.write(key, new Text(flows+"\t"+packets+"\t"+bytes));
 			  
