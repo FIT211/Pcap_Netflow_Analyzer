@@ -16,14 +16,14 @@ public class NetflowDBWritable2 implements Writable, DBWritable{
 	int timestamp;
 	int type;
 	int flows;
-	int bytes;
+	Long bytes;
 	int packets;
 	
    public NetflowDBWritable2() {  
 	   
     }  
    
-   public NetflowDBWritable2(int router, int timestamp, int type, int flows, int packets, int bytes) {  
+   public NetflowDBWritable2(int router, int timestamp, int type, int flows, int packets, Long bytes) {  
 	   this.router = router;
 	   this.timestamp = timestamp;
 	   this.type = type;
@@ -40,7 +40,7 @@ public class NetflowDBWritable2 implements Writable, DBWritable{
 		this.type = resultset.getInt(3);
 		this.flows = resultset.getInt(4);
 		this.packets = resultset.getInt(5);
-		this.bytes = resultset.getInt(6);
+		this.bytes = resultset.getLong(6);
 		
 	}
 
@@ -52,7 +52,7 @@ public class NetflowDBWritable2 implements Writable, DBWritable{
 		statement.setInt(3, this.type);
 		statement.setInt(4, this.flows);
 		statement.setInt(5, this.packets);
-		statement.setInt(6, this.bytes);
+		statement.setLong(6, this.bytes);
 		
 	}
 
@@ -64,7 +64,7 @@ public class NetflowDBWritable2 implements Writable, DBWritable{
 		this.type = resultset.readInt();
 		this.flows = resultset.readInt();
 		this.packets = resultset.readInt();
-		this.bytes = resultset.readInt();
+		this.bytes = resultset.readLong();
 	}
 
 	@Override
@@ -75,7 +75,7 @@ public class NetflowDBWritable2 implements Writable, DBWritable{
 		out.writeInt(type);
 		out.writeInt(flows);
 		out.writeInt(packets);
-		out.writeInt(bytes);
+		out.writeLong(bytes);
 	}
 
 }

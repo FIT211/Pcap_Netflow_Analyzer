@@ -54,7 +54,8 @@ public class Network_Analyzer {
     	   
 			Job job_state1 = get_JobConf("Netflow_Stat state1", inputDir);  
 			
-			job_state1.waitForCompletion(true);
+			job_state1.submit();
+			//job_state1.waitForCompletion(true);
     	}catch (IOException e) {
     		// TODO Auto-generated catch block
     		e.printStackTrace();
@@ -64,7 +65,7 @@ public class Network_Analyzer {
 	private Job get_JobConf(String jobName, Path inFilePath) throws IOException{//获取第一阶段工作配置
 		  
 		DBConfiguration.configureDB(conf, "com.mysql.jdbc.Driver", database, username, password);
-		
+		//DBConfiguration.configureDB(conf, "com.mysql.jdbc.Driver", "jdbc:mysql://166.111.143.245:3306/netflow", "root", "root");
 		Job job = Job.getInstance(conf);
 		
 		job.setJarByClass(Netflow_Stat.class);
@@ -199,8 +200,10 @@ public class Network_Analyzer {
 			while(value.iterator().hasNext()){
 				temp = value.iterator().next().toString().split("\t");
 				flows++;
-				packets += Integer.parseInt(temp[0].trim());
-				bytes += Integer.parseInt(temp[1].trim());
+				//packets += Integer.parseInt(temp[0].trim());
+				//bytes += Integer.parseInt(temp[1].trim());
+				packets += Long.parseLong(temp[0].trim());
+				bytes += Long.parseLong(temp[1].trim());
 			}
 			context.write(key, new Text(flows+"\t"+packets+"\t"+bytes));
 			//System.out.println(count++);
@@ -217,10 +220,10 @@ public class Network_Analyzer {
 		private long timestamp;
 		private int country;
 		private int direction;
-		
+		private int router;
 		@Override
 		public void setup(Context context){
-
+			router = context.getConfiguration().getInt("netflow.analyzer.router", 1);
 		}
 		
 		@Override
@@ -230,9 +233,12 @@ public class Network_Analyzer {
 			flows = 0;
 			while(value.iterator().hasNext()){
 				temp = value.iterator().next().toString().split("\t");
-				flows += Integer.parseInt(temp[0].trim());
-				packets += Integer.parseInt(temp[1].trim());
-				bytes += Integer.parseInt(temp[2].trim());
+				//flows += Integer.parseInt(temp[0].trim());
+				//packets += Integer.parseInt(temp[1].trim());
+				//bytes += Integer.parseInt(temp[2].trim());
+				flows += Long.parseLong(temp[0].trim());
+				packets += Long.parseLong(temp[1].trim());
+				bytes += Long.parseLong(temp[2].trim());
 			}
 			
 			temp = key.toString().split("\t");
@@ -240,7 +246,7 @@ public class Network_Analyzer {
 			timestamp = Integer.parseInt(temp[1].trim());
 			country = Integer.parseInt(temp[2].trim());
 			
-			context.write(new NetflowDBWritable(1, direction, (int)timestamp, (int)country, (int)flows, (int)packets, (int)bytes), null);
+			context.write(new NetflowDBWritable(router, direction, (int)timestamp, (int)country, (int)flows, (int)packets, (int)bytes), null);
 			  
 		}
 	    

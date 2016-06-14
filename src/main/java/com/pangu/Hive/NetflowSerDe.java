@@ -46,6 +46,7 @@ public class NetflowSerDe extends AbstractSerDe{
 		byte[] record;
 		record = values.getBytes();
 		NetflowRecord.setNeflowRecord(record);
+		
 		for(int i = 0; i < colNames.size(); i++){
 			columName = colNames.get(i);
 			System.out.println(i);
@@ -75,21 +76,21 @@ public class NetflowSerDe extends AbstractSerDe{
 					value = NetflowRecord.getDstPort();
 					break;
 				case "src_ip":
-					value = 3;//NetflowRecord.getSrcIP();
+					value = NetflowRecord.getSrcIP();
 					break;
 				case "dst_ip":
-					value = 1;//NetflowRecord.getDstIP();
+					value = NetflowRecord.getDstIP();
 					break;
 				case "pkt":
-					value = 2;//NetflowRecord.getPKT();
+					value = NetflowRecord.getPKT();
 					break;
 				case "bytes":
-					value = 3;//NetflowRecord.getBytes();
+					value = NetflowRecord.getBytes();
 					break;
 				default:
 					value = 1;//columName;
 	        }
-			System.out.println("sdfswwwwssdf");
+
 			row.set(i, value);
 			//row.add(i, value);
 		}

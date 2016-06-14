@@ -8,7 +8,6 @@ import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.io.compress.CompressionCodecFactory;
 import org.apache.hadoop.mapred.FileInputFormat;
-import org.apache.hadoop.mapred.InputFormat;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobConfigurable;
 import org.apache.hadoop.mapred.Reporter;
@@ -43,8 +42,5 @@ public class NetflowHiveInputFormat extends FileInputFormat<LongWritable, BytesW
 		// TODO Auto-generated method stub
 		
 	}
-
-
-
 
 }

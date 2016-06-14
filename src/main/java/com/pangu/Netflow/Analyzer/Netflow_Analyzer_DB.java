@@ -191,7 +191,7 @@ public class Netflow_Analyzer_DB {
 			timestamp = Integer.parseInt(temp[0].trim());
 			protocol = Integer.parseInt(temp[1].trim());
 			
-			context.write(new NetflowDBWritable2(1, (int)timestamp, (int)protocol, (int)flows, (int)packets, (int)bytes), null);
+			context.write(new NetflowDBWritable2(1, (int)timestamp, (int)protocol, (int)flows, (int)packets, bytes), null);
 			  
 		}
 	    

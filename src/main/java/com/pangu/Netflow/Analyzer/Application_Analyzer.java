@@ -49,7 +49,8 @@ public class Application_Analyzer {
 
 			Job job_state1 = get_JobConf("Netflow_Stat state1", inputDir);  
 
-			job_state1.waitForCompletion(true);
+			job_state1.submit();
+			//job_state1.waitForCompletion(true);
     	}catch (IOException e) {
     		// TODO Auto-generated catch block
     		e.printStackTrace();
@@ -58,8 +59,9 @@ public class Application_Analyzer {
 	
 	private Job get_JobConf(String jobName, Path inFilePath) throws IOException{//获取第一阶段工作配置
 		  
+		//DBConfiguration.configureDB(conf, "org.mariadb.jdbc.Driver", database, username, password);
 		DBConfiguration.configureDB(conf, "com.mysql.jdbc.Driver", database, username, password);
-		
+		//DBConfiguration.configureDB(conf, "com.mysql.jdbc.Driver", "jdbc:mysql://166.111.143.245:3306/netflow", "root", "root");
 		Job job = Job.getInstance(conf);
 		
 		job.setJarByClass(Netflow_Stat.class);
@@ -144,8 +146,10 @@ public class Application_Analyzer {
 			while(value.iterator().hasNext()){
 				temp = value.iterator().next().toString().split("\t");
 				flows++;
-				packets += Integer.parseInt(temp[0].trim());
-				bytes += Integer.parseInt(temp[1].trim());
+				//packets += Integer.parseInt(temp[0].trim());
+				//bytes += Integer.parseInt(temp[1].trim());
+				packets += Long.parseLong(temp[0].trim());
+				bytes += Long.parseLong(temp[1].trim());
 			}
 			context.write(key, new Text(flows+"\t"+packets+"\t"+bytes));
 			
@@ -161,10 +165,10 @@ public class Application_Analyzer {
 		private String temp[];
 		private long timestamp;
 		private int protocol;
-		
+		private int router;
 		@Override
 		public void setup(Context context){
-
+			router = context.getConfiguration().getInt("netflow.analyzer.router", 1);
 		}
 		
 		@Override
@@ -174,16 +178,19 @@ public class Application_Analyzer {
 			flows = 0;
 			while(value.iterator().hasNext()){
 				temp = value.iterator().next().toString().split("\t");
-				flows += Integer.parseInt(temp[0].trim());
-				packets += Integer.parseInt(temp[1].trim());
-				bytes += Integer.parseInt(temp[2].trim());
+				//flows += Integer.parseInt(temp[0].trim());
+				//packets += Integer.parseInt(temp[1].trim());
+				//bytes += Integer.parseInt(temp[2].trim());
+				flows += Long.parseLong(temp[0].trim());
+				packets += Long.parseLong(temp[1].trim());
+				bytes += Long.parseLong(temp[2].trim());
 			}
 			
 			temp = key.toString().split("\t");
 			timestamp = Integer.parseInt(temp[0].trim());
 			protocol = Integer.parseInt(temp[1].trim());
 			
-			context.write(new NetflowDBWritable2(1, (int)timestamp, (int)protocol, (int)flows, (int)packets, (int)bytes), null);
+			context.write(new NetflowDBWritable2(router, (int)timestamp, (int)protocol, (int)flows, (int)packets, bytes), null);
 			  
 		}
 	    

@@ -4,6 +4,6 @@
 .settings
 .metadata/
 C:
-
+log4j
 # Maven
 target

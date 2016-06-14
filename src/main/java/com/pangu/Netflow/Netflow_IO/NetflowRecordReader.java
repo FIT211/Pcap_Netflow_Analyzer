@@ -22,7 +22,7 @@ public class NetflowRecordReader extends RecordReader<LongWritable, BytesWritabl
 	private long start;
 	private long pos;
 	private long end;
-	
+	private boolean headerfound;
 
 	private Configuration conf;
 	private NetflowLineReader in;
@@ -77,7 +77,12 @@ public class NetflowRecordReader extends RecordReader<LongWritable, BytesWritabl
 		this.end = this.start + split.getLength();
 		this.pos = this.start;
 		this.file = this.filesplit.getPath();
-
+		
+		headerfound = true;
+		if(this.end - this.start < 3000000)
+			headerfound = false;
+		System.out.println("Start:"+start+"\tEnd:"+end);
+		
 		fs = file.getFileSystem(conf);
 		fileIn = fs.open(this.file);
 		
@@ -110,11 +115,19 @@ public class NetflowRecordReader extends RecordReader<LongWritable, BytesWritabl
 	@Override
 	public boolean nextKeyValue() throws IOException, InterruptedException {
 		// TODO Auto-generated method stub
-
+		if(headerfound == false){
+			System.out.println("header found false:"+count);
+			return false;
+		}
 	   int newSize = this.in.readLine(value);
 
+	   if(pos > end){
+		   System.out.println("num of record:"+count+"\tpos:"+pos);
+		   return false;
+	   }
+	   
 	   if(newSize == -1){
-		   System.out.println(count);
+		   System.out.println("num of record:"+count+"\tpos:"+pos);
 		   return false;
 	   }
 	   else {

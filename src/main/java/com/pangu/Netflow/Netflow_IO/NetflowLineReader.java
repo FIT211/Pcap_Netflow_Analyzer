@@ -33,7 +33,7 @@ public class NetflowLineReader {
 
     public NetflowLineReader(InputStream in, Configuration conf) throws IOException {
     	this.in = in;
-    	this.compressed = conf.getBoolean("netflow.analyzer.compression", true);
+    	this.compressed = conf.getBoolean("netflow.analyzer.compression", false);
     }
 
     public void close() throws IOException {
@@ -185,6 +185,7 @@ public class NetflowLineReader {
     int setBlock() throws IOException{
     	int bytes_read = 0;
     	int size = 0;
+    	int header_read;
     	this.pos = 0;
     	this.record_read = 0;
     	
@@ -192,14 +193,25 @@ public class NetflowLineReader {
     	byte[] record_num_b = new byte[4];
     	byte[] block_size_b = new byte[4];
     	
-    	in.read(block_header);
+    	header_read = 0;
+    	while(header_read < 12){//in.read 不保证能够读满指定长度，所以即使是读12个字节也要加循环读取，确保能够读满12个字节
+    		size = in.read(tmp, 0, 12-header_read);
+    		
+    		if(size == -1){
+        		return -1;
+    		}
+    		
+    		System.arraycopy(tmp, 0, block_header, header_read, size);
+    		header_read+=size;
+    	}
+    	size = 0;
     	
     	System.arraycopy(block_header, 0, record_num_b, 0, 4);
     	System.arraycopy(block_header, 4, block_size_b, 0, 4);
 
     	record_num = Bytes.toInt(BinaryUtils.flipBO(record_num_b, 4));
     	block_size = Bytes.toInt(BinaryUtils.flipBO(block_size_b, 4));
-    	//System.out.println("setblock\trecord_num"+record_num+"\tblock_size"+block_size);
+    	//System.out.println("setblock\trecord_num"+record_num+"\tblock_size"+block_size + "temp:");
     	block_body_compressed = new byte[block_size];
     	
     	//read blok_body, size of block_size

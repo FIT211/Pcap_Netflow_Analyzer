@@ -25,7 +25,7 @@ public class Netflow_analysis_runner {
 	private static String jobType = null;
 	private static int topN = 1;
 	private static int interval = 60;
-	
+	private static String routerName = null;
 	@SuppressWarnings("deprecation")
 	public static void main(String[] args) throws Exception{
 
@@ -82,6 +82,11 @@ public class Netflow_analysis_runner {
 					conf.setStrings("job.database.dbDir", dbDir);
 					break;
 					
+				case 'T': case 't':
+					routerName = args[i].substring(2).trim();
+					conf.setInt("netflow.analyzer.router", getRouterNum(routerName));
+					break;
+					
 				default:
 					;
 				break;
@@ -118,6 +123,11 @@ public class Netflow_analysis_runner {
 				case 'A': case 'a':
 					dbDir = args[i].substring(1);
 					conf.setStrings("job.database.dbDir", dbDir);
+					break;
+					
+				case 'T': case 't':
+					routerName = args[i].substring(2).trim();
+					conf.setInt("netflow.analyzer.router", getRouterNum(routerName));
 					break;
 					
 				default:
@@ -173,6 +183,64 @@ public class Netflow_analysis_runner {
 	}
 	
 	private static String JobInfo(String jobType){
-		return "JobType:"+jobType+"\nSrcDir:"+srcFilename+"\tDstDir:"+dstFilename+"\nInterval:"+interval+"\tReducerNum:"+topN;
+		return "JobType:"+jobType+"\nSrcDir:"+srcFilename+"\tDstDir:"+dstFilename+"\nInterval:"+interval+"\tReducerNum:"+topN+"\nRouterName:"+routerName+"\tRouterNum:"+getRouterNum(routerName);
+	}
+
+	private static int getRouterNum(String routerName){
+		switch (routerName){
+		case "THU":
+			return 1;
+		case "PKU":
+			return 2;
+		case "BUPT":
+			return 3;
+		case "BUAA":
+			return 4;
+		case "Fudan":
+			return 5;
+		case "HUST":
+			return 6;
+		case "Tongji":
+			return 7;
+		case "CQU":
+			return 8;
+		case "CSU":
+			return 9;
+		case "DLUT":
+			return 10;
+		case "HIT":
+			return 11;
+		case "JLU":
+			return 12;
+		case "LZU":
+			return 13;
+		case "NEU":
+			return 14;
+		case "SCUT":
+			return 15;
+		case "SDU":
+			return 16;
+		case "SEU":
+			return 17;
+		case "SJTU":
+			return 18;
+		case "TJU":
+			return 19;
+		case "UESTC":
+			return 20;
+		case "USTC":
+			return 21;
+		case "XJTU":
+			return 22;
+		case "XMU":
+			return 23;
+		case "ZJU":
+			return 24;
+		case "ZZU":
+			return 25;
+		
+		default:
+			return 1;
+		}		
 	}
 }

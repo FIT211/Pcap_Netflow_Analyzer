@@ -24,16 +24,14 @@ public class NetflowHiveRecordReader implements RecordReader<LongWritable, Bytes
 	private long pos;
 	private long end;
 	private int count;
-
+	private boolean headerfound;
+	
 	private Configuration conf;
 	private NetflowLineReader in;
 	private FileSplit filesplit;
 	private Path file;
 	private FileSystem fs;
 	private FSDataInputStream fileIn;
-
-	private LongWritable key;
-	private BytesWritable value;
 	
 	public NetflowHiveRecordReader(Configuration job, FileSplit split) throws IOException {
 		this.count = 0;
@@ -44,6 +42,10 @@ public class NetflowHiveRecordReader implements RecordReader<LongWritable, Bytes
 		this.pos = this.start;
 		this.file = this.filesplit.getPath();
 		
+		headerfound = true;
+		if(this.end - this.start < 3000000)
+			headerfound = false;
+			
 		this.compressionCodecs = new CompressionCodecFactory(conf);
 		CompressionCodec codec = this.compressionCodecs.getCodec(file);
 		
@@ -120,7 +122,9 @@ public class NetflowHiveRecordReader implements RecordReader<LongWritable, Bytes
 	   if (value == null) {
 		   value = new BytesWritable();
 	    }*/
-	   
+		if(headerfound == false){
+			return false;
+		}
 	   int newSize = this.in.readLine(value);
 
 	   if(newSize == -1)

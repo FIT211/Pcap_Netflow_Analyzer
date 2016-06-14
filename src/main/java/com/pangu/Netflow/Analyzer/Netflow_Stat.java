@@ -197,8 +197,8 @@ public class Netflow_Stat {
 			while(value.iterator().hasNext()){
 				temp = value.iterator().next().toString().split("\t");
 				flows++;
-				packets += Integer.parseInt(temp[0].trim());
-				bytes += Integer.parseInt(temp[1].trim());
+				packets += Long.parseLong(temp[0].trim());
+				bytes += Long.parseLong(temp[1].trim());
 			}
 			context.write(key, new Text(flows+"\t"+packets+"\t"+bytes));
 			  
@@ -225,9 +225,9 @@ public class Netflow_Stat {
 			flows = 0;
 			while(value.iterator().hasNext()){
 				temp = value.iterator().next().toString().split("\t");
-				flows += Integer.parseInt(temp[0].trim());
-				packets += Integer.parseInt(temp[1].trim());
-				bytes += Integer.parseInt(temp[2].trim());
+				flows += Long.parseLong(temp[0].trim());
+				packets += Long.parseLong(temp[1].trim());
+				bytes += Long.parseLong(temp[2].trim());
 			}
 			
 			context.write(key, new Text(flows+"\t"+packets+"\t"+bytes));
